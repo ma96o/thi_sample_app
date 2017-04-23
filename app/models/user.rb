@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  attr_accessor :remember_tokenm :activation_token
+  attr_accessor :remember_tokenm, :activation_token, :reset_token
   before_save :email_downcase
   before_create :create_activation_digest
   validates :name,  presence: true, length: { maximum: 50 }
@@ -39,6 +39,17 @@ class User < ApplicationRecord
   def activate
     update_attribute(:activated,    true)
     update_attribute(:activated_at, Time.zone.now)
+  end
+
+  def create_reset_digest
+    self.reset_token = User.new_token
+    update_attribute(:reset_digest,  User.digest(reset_token))
+    update_attribute(:reset_sent_at, Time.zone.now)
+  end
+
+  # パスワード再設定のメールを送信する
+  def send_password_reset_email
+    UserMailer.password_reset(self).deliver_now
   end
 
   private
